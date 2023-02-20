@@ -67,6 +67,9 @@ public class KeyAgreementImpl extends KeyAgreement {
             case ALG_DH_PLAIN:
                 engine = new DHBasicAgreement();
                 break;
+            case ALG_EC_PACE_GM:
+                engine = new ECGMAgreement();
+                break;
             default:
                 CryptoException.throwIt(CryptoException.NO_SUCH_ALGORITHM);
                 break;
@@ -112,7 +115,7 @@ public class KeyAgreementImpl extends KeyAgreement {
             byte[] num = engine.calculateAgreement(ecp).toByteArray();
 
             byte[] result;
-            if (algorithm != ALG_EC_SVDP_DH_PLAIN_XY) {
+            if (algorithm != ALG_EC_SVDP_DH_PLAIN_XY && algorithm != ALG_EC_PACE_GM) {
                 // truncate/zero-pad to field size as per the spec:
                 int fieldSize = ((ECPrivateKeyImpl) privateKey).getDomainParameters().getCurve().getFieldSize();
                 result = new byte[(fieldSize + 7) / 8];
@@ -139,7 +142,8 @@ public class KeyAgreementImpl extends KeyAgreement {
                     return (short) hashResult.length;
                 case ALG_EC_SVDP_DHC_PLAIN: // no break
                 case ALG_EC_SVDP_DH_PLAIN: // no break
-                case ALG_EC_SVDP_DH_PLAIN_XY:
+                case ALG_EC_SVDP_DH_PLAIN_XY: // no break
+                case ALG_EC_PACE_GM:
                     // plain output
                     Util.arrayCopyNonAtomic(result, (short) 0, secret, secretOffset, (short) result.length);
                     return (short) result.length;
@@ -171,6 +175,32 @@ public class KeyAgreementImpl extends KeyAgreement {
         public BigInteger calculateAgreement(CipherParameters publicKey) {
             ECPublicKeyParameters pub = (ECPublicKeyParameters)publicKey;
             ECPoint result = pub.getQ().multiply(this.key.getD());
+            return new BigInteger(1, result.getEncoded());
+        }
+    }
+
+    /**
+     * BouncyCastle doesn't offer KeyAgreement analogous to <code>ALG_EC_PACE_GM</code>.
+     * So do it here instead and squeeze the resulting point through byte encoding
+     * in a BigInteger.
+     */
+    static class ECGMAgreement implements BasicAgreement {
+        private ECPrivateKeyParameters key;
+
+        public ECGMAgreement() {
+        }
+
+        public void init(CipherParameters privateKey) {
+            this.key = (ECPrivateKeyParameters) privateKey;
+        }
+
+        public int getFieldSize() {
+            return (this.key.getParameters().getCurve().getFieldSize() + 7) / 8;
+        }
+
+        public BigInteger calculateAgreement(CipherParameters publicKey) {
+            ECPublicKeyParameters pub = (ECPublicKeyParameters) publicKey;
+            ECPoint result = this.key.getParameters().getG().multiply(this.key.getD()).add(pub.getQ());
             return new BigInteger(1, result.getEncoded());
         }
     }

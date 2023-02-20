@@ -94,16 +94,20 @@ public class AuthenticatedSymmetricCipherImpl extends AEADCipher {
      * For elliptic curve algorithms, the key must represent a valid point on the curve's domain parameters.
      * Additional key component/domain parameter strength checks are implementation specific.
      * Note:
+     * <ul>
      *      <li>AES, DES, triple DES and Korean SEED algorithms in CBC mode will use 0 for initial vector(IV) if this method is used.</li>
      *      <li>For optimal performance, when the theKey parameter is a transient key, the implementation should, whenever possible, use transient space for internal storage.</li>
      *      <li>AEADCipher in GCM mode will use 0 for initial vector(IV) if this method is used.</li>
+     * </ul>
      * @param theKey the key object to use for encrypting or decrypting
      * @param theMode one of MODE_DECRYPT or MODE_ENCRYPT
-     * @throws CryptoException- with the following reason codes:
+     * @throws CryptoException with the following reason codes:
+     * <ul>
      *      <li>CryptoException.ILLEGAL_VALUE if theMode option is an undefined value or
      *      if the Key is inconsistent with the Cipher implementation.</li>
      *      <li>CryptoException.UNINITIALIZED_KEY if theKey instance is uninitialized.</li>
      *      <li>CryptoException.INVALID_INIT if this method is called for an offline mode of encryption</li>
+     * </ul>
      */
     @Override
     public void init(Key theKey, byte theMode) throws CryptoException {
@@ -145,24 +149,27 @@ public class AuthenticatedSymmetricCipherImpl extends AEADCipher {
      * Additional key component/domain parameter strength checks are implementation specific.
      *
      * Note:
+     * <ul>
      * <li>DES and triple DES algorithms in CBC mode expect an 8-byte parameter value for the initial vector(IV) in bArray.</li>
      * <li>AES algorithms in CBC mode expect a 16-byte parameter value for the initial vector(IV) in bArray.</li>
      * <li>Korean SEED algorithms in CBC mode expect a 16-byte parameter value for the initial vector(IV) in bArray.</li>
      * <li>AES algorithms in ECB mode, DES algorithms in ECB mode, Korean SEED algorithm in ECB mode, RSA and DSA algorithms throw CryptoException.ILLEGAL_VALUE.</li>
      * <li>For optimal performance, when the theKey parameter is a transient key, the implementation should, whenever possible, use transient space for internal storage.</li>
+     * </ul>
      *
      * @param theKey the key object to use for encrypting or decrypting.
      * @param theMode one of MODE_DECRYPT or MODE_ENCRYPT
      * @param bArray byte array containing algorithm specific initialization info
      * @param bOff offset within bArray where the algorithm specific data begins
      * @param bLen byte length of algorithm specific parameter data
-     * @throws CryptoException with the following reason codes:
+     * @throws CryptoException with the following reason codes: <ul>
      *         <li>CryptoException.ILLEGAL_VALUE if theMode option is an undefined value or
      *         if a byte array parameter option is not supported by the algorithm or
      *         if the bLen is an incorrect byte length for the algorithm specific data or
      *         if the Key is inconsistent with the Cipher implementation.</li>
      *         <li>CryptoException.UNINITIALIZED_KEY if theKey instance is uninitialized.</li>
      *         <li>CryptoException.INVALID_INIT if this method is called for an offline mode of encryption</li>
+     * </ul>
      */
     @Override
     public void init(Key theKey, byte theMode, byte[] bArray, short bOff, short bLen) throws CryptoException {
@@ -212,9 +219,11 @@ public class AuthenticatedSymmetricCipherImpl extends AEADCipher {
      * @param messageLen the length of the message as presented in the update and doFinal methods
      * @param tagSize the size in bytes of the authentication tag
      * @throws CryptoException with the following reason codes:
+     * <ul>
      *         <li>CryptoException.ILLEGAL_VALUE if any of the values are outside the accepted range</li>
      *         <li>CryptoException.UNINITIALIZED_KEY if theKey instance is uninitialized.</li>
      *         <li>CryptoException.INVALID_INIT if this method is called for an online mode of encryption</li>
+     * </ul>
      */
     @Override
     public void init(Key theKey, byte theMode, byte[] nonceBuf, short nonceOff, short nonceLen, short adataLen, short messageLen, short tagSize) throws CryptoException {
@@ -262,9 +271,10 @@ public class AuthenticatedSymmetricCipherImpl extends AEADCipher {
      * @param aadBuf the buffer containing the AAD data
      * @param aadOff the offset of the AAD data in the buffer
      * @param aadLen the length in bytes of the AAD data in the buffer
-     * @throws CryptoException with the following reason codes:
+     * @throws CryptoException with the following reason codes: <ul>
      *     <li>ILLEGAL_USE if updating the AAD value is conflicting with the state of this cipher</li>
      *     <li>ILLEGAL_VALUE for CCM if the AAD size is different from the AAD size given in the initial block used as IV</li>
+     * </ul>
      */
     @Override
     public void updateAAD(byte[] aadBuf, short aadOff, short aadLen) throws CryptoException {
@@ -297,12 +307,13 @@ public class AuthenticatedSymmetricCipherImpl extends AEADCipher {
      * @param outBuff the output buffer, may be the same as the input buffer
      * @param outOffset  the offset into the output buffer where the resulting ciphertext/plaintext begins
      * @return number of bytes output in outBuff
-     * @throws CryptoException with the following reason codes:
+     * @throws CryptoException with the following reason codes: <ul>
      *        <li>CryptoException.INVALID_INIT if this Cipher object is not initialized.</li>
      *        <li>CryptoException.UNINITIALIZED_KEY if key not initialized.</li>
      *        <li>CryptoException.ILLEGAL_USE</li>
      *             <li>for CCM if AAD is not provided while it is indicated in the initial block used as IV</li>
      *             <li>for CCM if the payload exceeds the payload size given in the initial block used as IV</li>
+     * </ul>
      */
     @Override
     public short update(byte[] inBuff, short inOffset, short inLength, byte[] outBuff, short outOffset) throws CryptoException {
@@ -334,11 +345,13 @@ public class AuthenticatedSymmetricCipherImpl extends AEADCipher {
      * @param outOffset the offset into the output buffer where the resulting output data begins
      * @return number of bytes output in outBuff
      * @throws CryptoException with the following reason codes:
+     * <ul>
      *         <li>INVALID_INIT if this Cipher object is not initialized.</li>
      *         <li>UNINITIALIZED_KEY if key not initialized.</li>
      *         <li>ILLEGAL_USE</li>
      *               <li>for CCM if all Additional Authenticated Data (AAD) was not provided</li>
      *               <li>for CCM if the total message size provided is not identical to the messageLen parameter given in the init method</li>
+     * </ul>
      */
     @Override
     public short doFinal(byte[] inBuff, short inOffset, short inLength, byte[] outBuff, short outOffset) throws CryptoException {
@@ -385,9 +398,10 @@ public class AuthenticatedSymmetricCipherImpl extends AEADCipher {
      * @param tagOff the offset of the authentication tag in the buffer
      * @param tagLen the length in bytes of the authentication tag in the buffer
      * @return the tag length, as given by tagLen (for convenience)
-     * @throws CryptoException with the following reason codes
+     * @throws CryptoException with the following reason codes <ul>
      *         <li>ILLEGAL_USE if doFinal has not been called</li>
      *         <li>ILLEGAL_VALUE if the tag length is not supported</li>
+     * </ul>
      */
     @Override
     public short retrieveTag(byte[] tagBuf, short tagOff, short tagLen) throws CryptoException {
@@ -413,8 +427,8 @@ public class AuthenticatedSymmetricCipherImpl extends AEADCipher {
     /**
      * Verifies the authentication tag using the number of bits set in requiredTagLen bits.
      * Depending on the algorithm, only certain tag lengths may be supported. For all algorithms the tag length must be a multiple of 8 bits.
-     * Note:
-     *     <li>This method may only be called for MODE_DECRYPT after doFinal has been called.</li>
+     * Note: <ul>
+     *     <li>This method may only be called for MODE_DECRYPT after doFinal has been called.</li></ul>
      * In addition to returning a boolean result, this method sets the result in an internal state which can be rechecked using assertion methods of the SensitiveResult class, if supported by the platform.
      * @param receivedTagBuf the buffer that will contain the received authentication tag
      * @param receivedTagOff the offset of the received authentication tag in the buffer
@@ -422,8 +436,10 @@ public class AuthenticatedSymmetricCipherImpl extends AEADCipher {
      * @param requiredTagLen the required length in bytes of the received authentication tag, usually a constant value
      * @return Tag verification result
      * @throws CryptoException with the following reason codes:
+     * <ul>
      *         <li>ILLEGAL_USE if doFinal has not been called</li>
      *         <li>ILLEGAL_VALUE if the tag length is not supported</li>
+     * </ul>
      */
     @Override
     public boolean verifyTag(byte[] receivedTagBuf, short receivedTagOff, short receivedTagLen, short requiredTagLen) throws CryptoException {

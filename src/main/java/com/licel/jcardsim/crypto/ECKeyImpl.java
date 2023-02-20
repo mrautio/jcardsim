@@ -15,8 +15,6 @@
  */
 package com.licel.jcardsim.crypto;
 
-import java.math.BigInteger;
-import java.security.SecureRandom;
 import javacard.framework.JCSystem;
 import javacard.security.CryptoException;
 import javacard.security.ECKey;
@@ -29,6 +27,9 @@ import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
 import org.bouncycastle.crypto.params.ECKeyParameters;
 import org.bouncycastle.math.ec.ECCurve;
+
+import java.math.BigInteger;
+import java.security.SecureRandom;
 
 /**
  * Base class for
@@ -191,7 +192,7 @@ public abstract class ECKeyImpl extends KeyImpl implements ECKey {
         a.setBigInteger(parameters.getCurve().getA().toBigInteger());
         b.setBigInteger(parameters.getCurve().getB().toBigInteger());
         // generator
-        g.setBytes(parameters.getG().getEncoded());
+        g.setBytes(parameters.getG().getEncoded(false));
         // order
         r.setBigInteger(parameters.getN());
         // cofactor

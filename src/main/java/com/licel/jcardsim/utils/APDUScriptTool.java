@@ -16,6 +16,8 @@
 package com.licel.jcardsim.utils;
 
 import com.licel.jcardsim.smartcardio.JCardSimProvider;
+
+import javax.smartcardio.*;
 import java.io.*;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
@@ -24,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
-import javax.smartcardio.*;
 
 /**
  * Execute APDU script in C-APDU format.

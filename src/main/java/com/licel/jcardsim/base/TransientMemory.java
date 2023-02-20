@@ -15,12 +15,12 @@
  */
 package com.licel.jcardsim.base;
 
+import javacard.framework.JCSystem;
+import javacard.framework.SystemException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import javacard.framework.JCSystem;
-import javacard.framework.SystemException;
 
 /**
  * Basic implementation of storage transient memory of JCRE.
@@ -76,6 +76,36 @@ public class TransientMemory {
     public Object[] makeObjectArray(short length, byte event) {
         Object[] array = new Object[length];
         storeArray(array, event);
+        return array;
+    }
+
+    /**
+     * @see javacard.framework.JCSystem#makeGlobalArray(byte,short)
+     * @param type the array type - must be one of : ARRAY_TYPE_BOOLEAN, ARRAY_TYPE_BYTE, ARRAY_TYPE_SHORT, ARRAY_TYPE_INT, or ARRAY_TYPE_OBJECT
+     * @param length the length of the global transient array
+     * @return the new transient Object array
+     */
+    public Object makeGlobalArray(byte type, short length){
+        Object array = null;
+        switch (type){
+            case JCSystem.ARRAY_TYPE_BOOLEAN:
+                array = makeBooleanArray(length, JCSystem.CLEAR_ON_RESET);
+                break;
+            case JCSystem.ARRAY_TYPE_BYTE:
+                array = makeByteArray(length, JCSystem.CLEAR_ON_RESET);
+                break;
+            case JCSystem.ARRAY_TYPE_SHORT:
+                array = makeShortArray(length, JCSystem.CLEAR_ON_RESET);
+                break;
+            case JCSystem.ARRAY_TYPE_OBJECT:
+                array = makeObjectArray(length, JCSystem.CLEAR_ON_RESET);
+                break;
+            case JCSystem.ARRAY_TYPE_INT:
+            default:
+                SystemException.throwIt(SystemException.ILLEGAL_VALUE);
+                break;
+        }
+
         return array;
     }
 

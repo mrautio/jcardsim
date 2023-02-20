@@ -16,12 +16,12 @@
 
 package com.licel.jcardsim.framework.service;
 
-import java.rmi.Remote;
-
 import javacard.framework.APDU;
 import javacard.framework.ISO7816;
 import javacard.framework.service.BasicService;
 import javacard.framework.service.RemoteService;
+
+import java.rmi.Remote;
 
 public class RMIService extends BasicService implements RemoteService {
 

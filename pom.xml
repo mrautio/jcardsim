@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.klinec</groupId>
-    <version>3.0.5.12-SNAPSHOT</version>
+    <version>3.0.6.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>http://maven.apache.org</url>
 
@@ -37,7 +37,7 @@
         <netbeans.hint.license>apache20</netbeans.hint.license>
         <maven-javadoc-plugin.version>2.10.1</maven-javadoc-plugin.version>
         <ant.build.dir>${project.build.directory}/antrun/build</ant.build.dir>
-        <junit.version>3.8.1</junit.version>
+        <junit.version>4.13.1</junit.version>
         <java.version>1.7</java.version>
         <jcApiVersion>3.0.5</jcApiVersion>
     </properties>
@@ -109,13 +109,22 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.9.1</version>
+                        <version>${maven-javadoc-plugin.version}</version>
+                        <configuration>
+                            <author>false</author>
+			                <bottom><![CDATA[&nbsp;]]></bottom>
+                        </configuration>    
+                    </plugin>            
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jarsigner-plugin</artifactId>
+                        <version>1.3.2</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
+<!--                                <goals>-->
+<!--                                    <goal>jar</goal>-->
+<!--                                </goals>-->
                             </execution>
                         </executions>
                     </plugin>
@@ -142,6 +151,11 @@
   
     <dependencies>
         <dependency>
+           <groupId>com.esotericsoftware</groupId>
+           <artifactId>kryo</artifactId>
+           <version>5.2.0</version>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
@@ -150,7 +164,7 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk14</artifactId>
-            <version>1.46</version>
+            <version>1.71</version>
         </dependency>
         <dependency>
             <groupId>oracle.javacard</groupId>
@@ -299,7 +313,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>1.7</version>
+                <version>3.2.4</version>
                 <configuration>
                     <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
                     <minimizeJar>true</minimizeJar>
@@ -308,10 +322,20 @@
                             <pattern>org.bouncycastle</pattern>
                             <shadedPattern>com.licel.jcardsim.bouncycastle</shadedPattern>
                         </relocation>
+                        <relocation>
+                            <pattern>com.esotericsoftware</pattern>
+                            <shadedPattern>com.licel.jcardsim.esotericsoftware</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>org.objenesis</pattern>
+                            <shadedPattern>com.licel.jcardsim.objenesis</shadedPattern>
+                        </relocation>
                     </relocations>
                     <artifactSet>
                         <includes>
                             <include>org.bouncycastle:*</include>
+                            <include>com.esotericsoftware:*</include>
+                            <include>org.objenesis:*</include>
                         </includes>
                         <excludes>
                             <exclude>java.io:*</exclude>
@@ -347,6 +371,8 @@
                             <artifactSet>
                                 <includes>
                                     <include>org.bouncycastle:*</include>
+                                    <include>com.esotericsoftware:*</include>
+                                    <include>org.objenesis:*</include>
                                 </includes>
                                 <excludes>
                                     <exclude>java.io:*</exclude>
@@ -381,6 +407,8 @@
                             <artifactSet>
                                 <includes>
                                     <include>org.bouncycastle:*</include>
+                                    <include>com.esotericsoftware:*</include>
+                                    <include>org.objenesis:*</include>
                                 </includes>
                                 <excludes>
                                     <exclude>oracle.javacard:*</exclude>
@@ -419,13 +447,13 @@
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>1.8</version>
                 <dependencies>
-<!--                    <dependency>-->
-<!--                        <groupId>com.sun</groupId>-->
-<!--                        <artifactId>tools</artifactId>-->
-<!--                        <version>1.5.0</version>-->
-<!--                        <scope>system</scope>-->
-<!--                        <systemPath>${java.home}/../lib/tools.jar</systemPath>-->
-<!--                    </dependency>-->
+                    <dependency>
+                        <groupId>com.sun</groupId>
+                        <artifactId>tools</artifactId>
+                        <version>1.5.0</version>
+                        <scope>system</scope>
+                        <systemPath>${java.home}/../lib/tools.jar</systemPath>
+                    </dependency>
                     <dependency>
                         <groupId>org.apache.ant</groupId>
                         <artifactId>ant-junit</artifactId>

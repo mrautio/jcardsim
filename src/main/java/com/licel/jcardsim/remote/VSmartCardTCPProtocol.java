@@ -23,9 +23,7 @@ package com.licel.jcardsim.remote;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
 import java.net.Socket;
-
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -59,7 +57,11 @@ public class VSmartCardTCPProtocol {
     public void disconnect() {
         closeSocket(socket);
     }
-
+    
+    public boolean isClosed() {
+        return socket.isClosed();
+    }
+    
     public int readCommand() throws IOException {
         final byte[] cmdBuf = new byte[3];
         read(cmdBuf, 0, 2, dataInput);

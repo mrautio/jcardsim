@@ -15,7 +15,6 @@
  */
 package com.licel.jcardsim.utils;
 
-import com.licel.jcardsim.base.SimulatorSystem;
 import junit.framework.TestCase;
 
 import java.io.ByteArrayInputStream;

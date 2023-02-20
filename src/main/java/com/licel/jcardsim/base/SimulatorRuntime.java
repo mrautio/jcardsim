@@ -17,7 +17,6 @@ package com.licel.jcardsim.base;
 
 import com.licel.jcardsim.utils.AIDUtil;
 import com.licel.jcardsim.utils.BiConsumer;
-import com.licel.jcardsim.utils.ByteUtil;
 import javacard.framework.*;
 import javacardx.apdu.ExtendedLength;
 
@@ -28,7 +27,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -317,10 +315,8 @@ public class SimulatorRuntime {
             Util.setShort(theSW, (short) 0, (short) 0x9000);
         } catch (Throwable e) {
             Util.setShort(theSW, (short) 0, ISO7816.SW_UNKNOWN);
-            if (e instanceof CardException) {
-                Util.setShort(theSW, (short) 0, ((CardException) e).getReason());
-            } else if (e instanceof CardRuntimeException) {
-                Util.setShort(theSW, (short) 0, ((CardRuntimeException) e).getReason());
+            if (e instanceof ISOException) {
+                Util.setShort(theSW, (short) 0, ((ISOException) e).getReason());
             }
         }
         finally {
@@ -329,7 +325,7 @@ public class SimulatorRuntime {
         }
 
         // if theSW = 0x61XX or 0x9XYZ than return data (ISO7816-3)
-        if(theSW[0] == 0x61 || theSW[0] == 0x62 || theSW[0] == 0x63 || (theSW[0] >= (byte)0x90 && theSW[0] <= (byte)0x9F)) {
+        if(theSW[0] == 0x61 || theSW[0] == 0x62 || theSW[0] == 0x63 || (theSW[0] >= (byte)0x90 && theSW[0] <= (byte)0x9F) || isNotAbortingCase(theSW) ) {
             response = new byte[responseBufferSize + 2];
             Util.arrayCopyNonAtomic(responseBuffer, (short) 0, response, (short) 0, responseBufferSize);
             Util.arrayCopyNonAtomic(theSW, (short) 0, response, responseBufferSize, (short) 2);
@@ -339,6 +335,16 @@ public class SimulatorRuntime {
         }
 
         return response;
+    }
+
+    /**
+     * Check if secure channel is not aborted
+     * This method must be override in subclass that have secure channel abort checking
+     * @param SW Status word
+     * @return True if secure channel is not aborted
+     */
+    protected boolean isNotAbortingCase(byte[] SW) {
+        return false;
     }
 
     protected AID findAppletForSelectApdu(byte[] selectApdu, ApduCase apduCase) {
@@ -685,7 +691,11 @@ public class SimulatorRuntime {
         public Applet getApplet(){
             return applet;
         }
-
+        
+        public AID getAID() {
+            return aid;
+        }
+        
         @Override
         public String toString() {
             return String.format("ApplicationInstance (%s)", AIDUtil.toString(aid));

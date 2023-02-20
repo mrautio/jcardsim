@@ -16,6 +16,11 @@
 package com.licel.jcardsim.base;
 
 import com.licel.jcardsim.io.JavaCardInterface;
+import com.licel.jcardsim.utils.AIDUtil;
+import com.licel.jcardsim.utils.ByteUtil;
+import javacard.framework.*;
+import org.bouncycastle.util.encoders.Hex;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,18 +30,13 @@ import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.Properties;
 
-import com.licel.jcardsim.utils.AIDUtil;
-import com.licel.jcardsim.utils.ByteUtil;
-import javacard.framework.*;
-import org.bouncycastle.util.encoders.Hex;
-
 /**
  * Simulates a JavaCard.
  */
 public class Simulator implements JavaCardInterface {
 
     // default ATR - NXP JCOP 31/36K
-    static final String DEFAULT_ATR = "3BFA1800008131FE454A434F5033315632333298";
+    public static final String DEFAULT_ATR = "3BFA1800008131FE454A434F5033315632333298";
     // ATR system property name
     public static final String ATR_SYSTEM_PROPERTY = "com.licel.jcardsim.card.ATR";
     static final String PROPERTY_PREFIX = "com.licel.jcardsim.card.applet.";

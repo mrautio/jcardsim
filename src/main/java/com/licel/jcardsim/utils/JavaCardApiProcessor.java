@@ -15,6 +15,13 @@
  */
 package com.licel.jcardsim.utils;
 
+import org.objectweb.asm.*;
+import org.objectweb.asm.commons.ClassRemapper;
+import org.objectweb.asm.commons.SimpleRemapper;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -22,14 +29,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.objectweb.asm.*;
-
-import org.objectweb.asm.commons.ClassRemapper;
-import org.objectweb.asm.commons.SimpleRemapper;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
 
 /**
  * Injects jCardSim’s code into Java Card Api Reference Classes
@@ -68,6 +67,12 @@ public class JavaCardApiProcessor {
         proxyClass(buildDir, "com.licel.jcardsim.crypto.SignatureProxy", "javacard.security.Signature", true);
         proxyExceptionClass(buildDir, "javacard.framework.service.ServiceException");
         proxyExceptionClass(buildDir, "javacard.security.CryptoException");
+        proxyExceptionClass(buildDir, "javacardx.external.ExternalException");
+        proxyExceptionClass(buildDir, "javacardx.framework.tlv.TLVException");
+        proxyExceptionClass(buildDir, "javacardx.biometry1toN.Bio1toNException");
+        proxyExceptionClass(buildDir, "javacardx.framework.util.UtilException");
+        proxyExceptionClass(buildDir, "javacardx.biometry.BioException");
+        proxyExceptionClass(buildDir, "javacardx.framework.string.StringException");
 
     }
 

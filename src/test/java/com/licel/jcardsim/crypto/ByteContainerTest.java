@@ -1,9 +1,9 @@
 package com.licel.jcardsim.crypto;
 
+import javacard.framework.JCSystem;
 import junit.framework.TestCase;
 
 import java.math.BigInteger;
-import javacard.framework.JCSystem;
 
 public class ByteContainerTest extends TestCase {
     public ByteContainerTest(String name) {

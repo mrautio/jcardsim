@@ -8,7 +8,7 @@ jCardSim (Official repo of the [jCardSim](http://jcardsim.org) project)
 This is a forked repo with additional fixes, e.g., POM file fixes, `-noverify` not needed / bytecode generation fixes, 
 java 9+ compilation fixes.
 
-jCardSim is an open source simulator for Java Card, v.2.2/3.0.5:
+jCardSim is an open source simulator for Java Card, v3.0.5:
 
 * `javacard.framework.*`
 * `javacard.framework.security.*`
@@ -46,9 +46,7 @@ assertEquals(0x9000, response.getSW());
 
   (Javadoc rendered: https://jcardsim.org/jcardsim/)
 
-*Latest stable release 2.2.1*: https://github.com/licel/jcardsim/raw/master/jcardsim-2.2.1-all.jar
-
-*Latest stable release 2.2.2*: https://github.com/licel/jcardsim/raw/master/jcardsim-2.2.2-all.jar
+*Latest release 3.0.5*: https://github.com/licel/jcardsim/packages/1650016
 
 ## Maven
 *Maven Central Repository*
@@ -56,13 +54,13 @@ assertEquals(0x9000, response.getSW());
 <dependency>
   <groupId>com.klinec</groupId>
   <artifactId>jcardsim</artifactId>
-  <version>3.0.5.11</version>
+  <version>3.0.6.0</version>
 </dependency>
 ```
 
 Gradle:
 ```groovy
-implementation('com.klinec:jcardsim:3.0.5.11')
+implementation('com.klinec:jcardsim:3.0.6.0')
 ```
 
 ### RandomData
@@ -106,8 +104,8 @@ https://github.com/licel/jcardsim/pull/155
 ### How to help jCardSim?
 
 * Join the team of jCardSim developers.
-* Try out [DexProtector](http://dexprotector.com). The product is designed for strong and robust protection of Android applications against reverse engineering and modification.
-* Licel has one more product you may be interested in - [Stringer Java Obfuscator](https://jfxstore.com/stringer). This tool provides all the features you need to comprehensively protect your Java applications.
+* Try out [DexProtector](https://licelus.com/products/dexprotector). The product is designed for strong and robust protection of Android applications against reverse engineering and modification.
+* Licel has one more product you may be interested in - [Stringer Java Obfuscator](https://licelus.com/products/stringer). This tool provides all the features you need to comprehensively protect your Java applications.
 
 **License**: [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 

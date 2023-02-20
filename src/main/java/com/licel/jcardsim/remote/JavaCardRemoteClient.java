@@ -16,12 +16,13 @@
 package com.licel.jcardsim.remote;
 
 import com.licel.jcardsim.io.JavaCardInterface;
+import javacard.framework.AID;
+import javacard.framework.SystemException;
+
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import javacard.framework.AID;
-import javacard.framework.SystemException;
 
 /**
  * RMI client.

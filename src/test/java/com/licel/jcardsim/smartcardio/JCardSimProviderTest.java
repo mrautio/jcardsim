@@ -15,16 +15,16 @@
  */
 package com.licel.jcardsim.smartcardio;
 
-import com.licel.jcardsim.base.SimulatorSystem;
+import javacard.framework.ISO7816;
+import junit.framework.TestCase;
+import org.bouncycastle.util.encoders.Hex;
+
+import javax.smartcardio.*;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.Arrays;
 import java.util.List;
-import javacard.framework.ISO7816;
-import javax.smartcardio.*;
-import junit.framework.TestCase;
-import org.bouncycastle.util.encoders.Hex;
 
 /**
  * Test Java Card Terminal emulation.

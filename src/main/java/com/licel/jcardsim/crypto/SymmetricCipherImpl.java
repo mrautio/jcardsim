@@ -19,9 +19,11 @@ import javacard.framework.JCSystem;
 import javacard.framework.Util;
 import javacard.security.CryptoException;
 import javacard.security.Key;
+import javacard.security.KeyBuilder;
 import javacardx.crypto.Cipher;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.modes.CBCBlockCipher;
+import org.bouncycastle.crypto.modes.SICBlockCipher;
 import org.bouncycastle.crypto.paddings.ISO7816d4Padding;
 import org.bouncycastle.crypto.paddings.PKCS7Padding;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
@@ -39,6 +41,7 @@ public class SymmetricCipherImpl extends Cipher {
     BufferedBlockCipher engine;
     boolean isInitialized;
 
+
     public SymmetricCipherImpl(byte algorithm) {
         this.algorithm = algorithm;
     }
@@ -55,6 +58,7 @@ public class SymmetricCipherImpl extends Cipher {
             case ALG_DES_ECB_ISO9797_M1:
             case ALG_DES_ECB_ISO9797_M2:
             case ALG_DES_ECB_PKCS5:
+            case ALG_KOREAN_SEED_ECB_NOPAD:
                 CryptoException.throwIt(CryptoException.ILLEGAL_VALUE);
                 break;
             case ALG_DES_CBC_NOPAD:
@@ -108,10 +112,15 @@ public class SymmetricCipherImpl extends Cipher {
         if (!(theKey instanceof SymmetricKeyImpl)) {
             CryptoException.throwIt(CryptoException.ILLEGAL_VALUE);
         }
+        if( !checkKeyCompatibility(theKey)){
+            CryptoException.throwIt(CryptoException.ILLEGAL_VALUE);
+        }
+
         SymmetricKeyImpl key = (SymmetricKeyImpl) theKey;
         switch (algorithm) {
             case ALG_DES_CBC_NOPAD:
             case ALG_AES_BLOCK_128_CBC_NOPAD:
+            case ALG_KOREAN_SEED_CBC_NOPAD:
                 engine = new BufferedBlockCipher(new CBCBlockCipher(key.getCipher()));
                 break;
             case ALG_DES_CBC_ISO9797_M1:
@@ -124,7 +133,8 @@ public class SymmetricCipherImpl extends Cipher {
                 engine = new PaddedBufferedBlockCipher(new CBCBlockCipher(key.getCipher()), new PKCS7Padding());
                 break;
             case ALG_DES_ECB_NOPAD:
-            case ALG_AES_BLOCK_128_ECB_NOPAD:                
+            case ALG_AES_BLOCK_128_ECB_NOPAD:
+            case ALG_KOREAN_SEED_ECB_NOPAD:
                 engine = new BufferedBlockCipher(key.getCipher());
                 break;
             case ALG_DES_ECB_ISO9797_M1:
@@ -139,11 +149,60 @@ public class SymmetricCipherImpl extends Cipher {
             case ALG_AES_CBC_ISO9797_M2:
                 engine = new PaddedBufferedBlockCipher(new CBCBlockCipher(key.getCipher()), new ISO7816d4Padding());
                 break;
+            case ALG_AES_CTR:
+                engine = new BufferedBlockCipher(new SICBlockCipher(key.getCipher()));
+                break;
             default:
                 CryptoException.throwIt(CryptoException.NO_SUCH_ALGORITHM);
                 break;
         }
     }
+
+    private boolean checkKeyCompatibility(Key theKey){
+        switch(theKey.getType()){
+            case KeyBuilder.TYPE_DES:
+            case KeyBuilder.TYPE_DES_TRANSIENT_RESET:
+            case KeyBuilder.TYPE_DES_TRANSIENT_DESELECT:
+                if( (algorithm == Cipher.ALG_DES_CBC_NOPAD) ||
+                    (algorithm == Cipher.ALG_DES_CBC_ISO9797_M1) ||
+                    (algorithm == Cipher.ALG_DES_CBC_ISO9797_M2) ||
+                    (algorithm == Cipher.ALG_DES_CBC_PKCS5) ||
+                    (algorithm == Cipher.ALG_DES_ECB_NOPAD) ||
+                    (algorithm == Cipher.ALG_DES_ECB_ISO9797_M1) ||
+                    (algorithm == Cipher.ALG_DES_ECB_ISO9797_M2) ||
+                    (algorithm == Cipher.ALG_DES_ECB_PKCS5))
+                    return true;
+                break;
+
+            case KeyBuilder.TYPE_AES:
+            case KeyBuilder.TYPE_AES_TRANSIENT_RESET:
+            case KeyBuilder.TYPE_AES_TRANSIENT_DESELECT:
+                if( (algorithm == Cipher.ALG_AES_CTR) ||
+                    (algorithm == Cipher.ALG_AES_BLOCK_128_CBC_NOPAD) ||
+                    (algorithm == Cipher.ALG_AES_BLOCK_128_ECB_NOPAD) ||
+                    (algorithm == Cipher.ALG_AES_CBC_ISO9797_M1) ||
+                    (algorithm == Cipher.ALG_AES_CBC_ISO9797_M2) ||
+                    (algorithm == Cipher.ALG_AES_CBC_PKCS5) ||
+                    (algorithm == Cipher.ALG_AES_ECB_ISO9797_M1) ||
+                    (algorithm == Cipher.ALG_AES_ECB_ISO9797_M2) ||
+                    (algorithm == Cipher.ALG_AES_ECB_PKCS5))
+                    return true;
+                break;
+
+
+            case KeyBuilder.TYPE_KOREAN_SEED:
+            case KeyBuilder.TYPE_KOREAN_SEED_TRANSIENT_RESET:
+            case KeyBuilder.TYPE_KOREAN_SEED_TRANSIENT_DESELECT:
+                if( (algorithm == Cipher.ALG_KOREAN_SEED_CBC_NOPAD) ||
+                    (algorithm == Cipher.ALG_KOREAN_SEED_ECB_NOPAD) )
+                    return true;
+                break;
+        }
+
+        return false;
+
+    }
+
     public byte getPaddingAlgorithm() {
         throw new UnsupportedOperationException("Not supported yet.");
     }

@@ -16,12 +16,7 @@
 package com.licel.jcardsim.crypto;
 
 import javacard.framework.JCSystem;
-import javacard.security.KeyBuilder;
-import javacard.security.KeyPair;
-import javacard.security.RSAPrivateKey;
-import javacard.security.RSAPublicKey;
-import javacard.security.Signature;
-import javacard.security.SignatureMessageRecovery;
+import javacard.security.*;
 import junit.framework.TestCase;
 
 /**
@@ -164,7 +159,7 @@ public class SignatureMessageRecoveryTest extends TestCase {
 
     }
 
-    public void testSelfCCryptoVerifyPartMsgRecovery() {
+    public void testSelfCryptoSignAndVerifyPartMsgRecovery() {
         byte[] data = new byte[(short)256];
         for (short i = 0; i < data.length; i++) {
             data[i] = (byte)i;

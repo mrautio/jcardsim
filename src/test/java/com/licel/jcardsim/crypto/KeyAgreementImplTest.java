@@ -15,12 +15,7 @@
  */
 package com.licel.jcardsim.crypto;
 
-import javacard.security.DHPublicKey;
-import javacard.security.ECPublicKey;
-import javacard.security.KeyAgreement;
-import javacard.security.KeyBuilder;
-import javacard.security.KeyPair;
-import javacard.security.PrivateKey;
+import javacard.security.*;
 import junit.framework.TestCase;
 import org.bouncycastle.util.Arrays;
 
@@ -62,7 +57,6 @@ public class KeyAgreementImplTest extends TestCase {
         System.out.println("test ecgm");
         testGenerateSecret(KeyPair.ALG_EC_F2M, KeyBuilder.LENGTH_EC_F2M_113, KeyAgreement.ALG_EC_PACE_GM);
         testGenerateSecret(KeyPair.ALG_EC_FP, KeyBuilder.LENGTH_EC_FP_112, KeyAgreement.ALG_EC_PACE_GM);
-
     }
     
      /**

@@ -16,13 +16,10 @@
 package com.licel.jcardsim.framework;
 
 import com.licel.jcardsim.base.SimulatorSystem;
-import java.lang.reflect.Field;
-import javacard.framework.AID;
-import javacard.framework.JCSystem;
-import javacard.framework.Shareable;
-import javacard.framework.SystemException;
-import javacard.framework.TransactionException;
+import javacard.framework.*;
 import javacard.security.MessageDigest;
+
+import java.lang.reflect.Field;
 
 
 /**
@@ -137,6 +134,25 @@ public class JCSystemProxy {
     public static Object[] makeTransientObjectArray(short length, byte event)
             throws NegativeArraySizeException, SystemException {
         return SimulatorSystem.instance().getTransientMemory().makeObjectArray(length, event);
+    }
+
+    /**
+     * Creates a global <code>CLEAR_ON_RESET</code> transient array of the type specified, with the specified array length.
+     * A global array can be accessed from any applet context.
+     * References to global arrays cannot be stored in class variables or instance variables or array components.
+     * (See Runtime Environment Specification, Java Card Platform, Classic Edition, section 6.2.2 for details)
+     * @param type the array type - must be one of : ARRAY_TYPE_BOOLEAN, ARRAY_TYPE_BYTE, ARRAY_TYPE_SHORT, ARRAY_TYPE_INT, or ARRAY_TYPE_OBJECT
+     * @param length the length of the global transient array
+     * @return the new transient Object array
+     * @throws NegativeArraySizeException if the <CODE>length</CODE> parameter is negative
+     * @throws SystemException with the following reason codes:
+     * <ul>
+     * <li><code>SystemException.ILLEGAL_VALUE</code> if type is not a valid type code. An implementation which does not support the "int" type may throw this exception if type is ARRAY_TYPE_INT
+     * <li><code>SystemException.NO_TRANSIENT_SPACE</code> if sufficient transient space is not available.
+     * </ul>
+     */
+    public static Object makeGlobalArray(byte type, short length){
+        return SimulatorSystem.instance().getTransientMemory().makeGlobalArray(type,length);
     }
 
     /**

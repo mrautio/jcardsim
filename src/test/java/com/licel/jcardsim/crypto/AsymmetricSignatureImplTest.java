@@ -15,14 +15,7 @@
  */
 package com.licel.jcardsim.crypto;
 
-import javacard.security.KeyBuilder;
-import javacard.security.KeyPair;
-import javacard.security.MessageDigest;
-import javacard.security.PrivateKey;
-import javacard.security.PublicKey;
-import javacard.security.RSAPublicKey;
-import javacard.security.RandomData;
-import javacard.security.Signature;
+import javacard.security.*;
 import junit.framework.TestCase;
 import org.bouncycastle.util.encoders.Hex;
 
@@ -185,6 +178,26 @@ public class AsymmetricSignatureImplTest extends TestCase {
         testSelfSignVerify(KeyPair.ALG_EC_F2M, KeyBuilder.LENGTH_EC_F2M_113, Signature.ALG_ECDSA_SHA_512);
         // ecfp keys
         testSelfSignVerify(KeyPair.ALG_EC_FP, KeyBuilder.LENGTH_EC_FP_112, Signature.ALG_ECDSA_SHA_512);
+    }
+
+    public void testSelfSignVerifyDSA_SHA(){
+        System.out.println("self test sign/verify DSA SHA");
+
+        testSelfSignVerify(KeyPair.ALG_DSA, KeyBuilder.LENGTH_DSA_512, Signature.ALG_DSA_SHA);
+        testSelfSignVerify(KeyPair.ALG_DSA, KeyBuilder.LENGTH_DSA_768, Signature.ALG_DSA_SHA);
+        testSelfSignVerify(KeyPair.ALG_DSA, KeyBuilder.LENGTH_DSA_1024, Signature.ALG_DSA_SHA);
+    }
+
+    public void testSelfSignVerifyRSA_MD5_PKCS1_PSS(){
+        System.out.println("self test sign/verify RSA MD5 PKCS1 PSS");
+        testSelfSignVerify(KeyPair.ALG_RSA_CRT, KeyBuilder.LENGTH_RSA_512, Signature.ALG_RSA_MD5_PKCS1_PSS);
+        testSelfSignVerify(KeyPair.ALG_RSA_CRT, KeyBuilder.LENGTH_RSA_1024, Signature.ALG_RSA_MD5_PKCS1_PSS);
+    }
+
+    public void testSelfSignVerifyRSA_RIPEMD160_PKCS1_PSS(){
+        System.out.println("self test sign/verify RSA RIPEMD160 PKCS1 PSS");
+        testSelfSignVerify(KeyPair.ALG_RSA_CRT, KeyBuilder.LENGTH_RSA_512, Signature.ALG_RSA_RIPEMD160_PKCS1_PSS);
+        testSelfSignVerify(KeyPair.ALG_RSA_CRT, KeyBuilder.LENGTH_RSA_1024, Signature.ALG_RSA_RIPEMD160_PKCS1_PSS);
     }
 
     /**

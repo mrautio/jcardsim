@@ -16,9 +16,9 @@
 package com.licel.jcardsim.crypto;
 
 import javacard.security.KeyBuilder;
-import javacard.security.RandomData;
 import javacard.security.RSAPrivateKey;
 import javacard.security.RSAPublicKey;
+import javacard.security.RandomData;
 import javacardx.crypto.Cipher;
 import junit.framework.TestCase;
 import org.bouncycastle.util.Arrays;

@@ -15,10 +15,10 @@
  */
 package com.licel.jcardsim.framework.service;
 
-import java.rmi.Remote;
-
 import com.licel.jcardsim.base.SimulatorRuntime;
 import com.licel.jcardsim.base.SimulatorSystem;
+
+import java.rmi.Remote;
 
 /**
  * Proxy for <code>CardRemoteObjectProxy</code>

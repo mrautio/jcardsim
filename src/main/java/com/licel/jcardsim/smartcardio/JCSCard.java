@@ -17,6 +17,7 @@ package com.licel.jcardsim.smartcardio;
 
 import com.licel.jcardsim.base.CardManager;
 import com.licel.jcardsim.io.JavaCardInterface;
+
 import javax.smartcardio.*;
 
 /**

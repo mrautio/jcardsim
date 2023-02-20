@@ -17,6 +17,7 @@ package com.licel.jcardsim.smartcardio;
 
 import com.licel.jcardsim.io.CAD;
 import com.licel.jcardsim.io.JavaCardInterface;
+
 import javax.smartcardio.Card;
 import javax.smartcardio.CardException;
 import javax.smartcardio.CardTerminal;

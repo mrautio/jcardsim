@@ -123,7 +123,16 @@ public class KeyBuilderProxy {
             case KeyBuilder.TYPE_DH_PRIVATE:
                 key = new DHPrivateKeyImpl(keyLength);
                 break;
-                
+
+            case KeyBuilder.TYPE_KOREAN_SEED_TRANSIENT_RESET:
+            case KeyBuilder.TYPE_KOREAN_SEED_TRANSIENT_DESELECT:
+            case KeyBuilder.TYPE_KOREAN_SEED:
+                if (keyLength != KeyBuilder.LENGTH_KOREAN_SEED_128) {
+                    CryptoException.throwIt(CryptoException.ILLEGAL_VALUE);
+                }
+                key = new SymmetricKeyImpl(keyType, keyLength);
+
+                break;
             default:
                 CryptoException.throwIt(CryptoException.NO_SUCH_ALGORITHM);
                 break;

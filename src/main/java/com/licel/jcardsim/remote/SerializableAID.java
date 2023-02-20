@@ -15,8 +15,9 @@
  */
 package com.licel.jcardsim.remote;
 
-import java.io.Serializable;
 import javacard.framework.AID;
+
+import java.io.Serializable;
 
 /**
  * Serializable AID container for the RMI calls.

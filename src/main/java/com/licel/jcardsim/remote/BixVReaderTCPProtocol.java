@@ -18,14 +18,8 @@
 
 package com.licel.jcardsim.remote;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
+import java.io.*;
 import java.net.Socket;
-
 import java.util.Formatter;
 import java.util.concurrent.TimeUnit;
 

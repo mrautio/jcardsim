@@ -15,10 +15,13 @@
  */
 package com.licel.jcardsim.crypto;
 
+import com.licel.jcardsim.base.Simulator;
+import com.licel.jcardsim.samples.SymmetricCipherApplet;
+import com.licel.jcardsim.utils.AIDUtil;
+import javacard.framework.AID;
+import javacard.framework.ISO7816;
 import javacard.framework.Util;
-import javacard.security.AESKey;
-import javacard.security.Key;
-import javacard.security.KeyBuilder;
+import javacard.security.*;
 import javacardx.crypto.Cipher;
 import junit.framework.TestCase;
 import org.bouncycastle.util.Arrays;
@@ -111,6 +114,14 @@ public class SymmetricCipherImplTest extends TestCase {
     // Appendix F.2.5
     String[] AES_CBC_256_TEST = {"603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4", "000102030405060708090a0b0c0d0e0f", "6bc1bee22e409f96e93d7e117393172a", "f58c4c04d6e5f1ba779eabfb5f7bfbd6"};
 
+    // AES CTR test vectors from NIST (sp800-38a)
+    // FORMAT: key:counter:plaintext:ciphertext
+    // Appendix F.5.1
+    String[] AES_CTR_128_TEST = {"2b7e151628aed2a6abf7158809cf4f3c", "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff","6bc1bee22e409f96e93d7e117393172a","874d6191b620e3261bef6864990db6ce"};
+    // Appendix F.5.3
+    String[] AES_CTR_192_TEST = {"8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b", "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff","6bc1bee22e409f96e93d7e117393172a","1abc932417521ca24f2b0459fe7e6e0b"};
+    // Appendix F.5.5
+    String[] AES_CTR_256_TEST = {"603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4", "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff","6bc1bee22e409f96e93d7e117393172a","601ec313775789a5b7a7f504bbf3d228"};
     public SymmetricCipherImplTest(String testName) {
         super(testName);
     }
@@ -257,4 +268,410 @@ public class SymmetricCipherImplTest extends TestCase {
         assertEquals(processedBytes, msg.length);
         assertEquals(true, Arrays.areEqual(decrypted, msg));
     }
+
+    /**
+     * Test mismatched Cipher AES algorithm and key DES type
+     */
+    public void testMismatchedCipherAESAlgorithmAndKeyDESType(){
+        Cipher engineAES = Cipher.getInstance(Cipher.ALG_AES_BLOCK_128_CBC_NOPAD,false);
+        DESKey desKey = (DESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_DES_TRANSIENT_RESET,KeyBuilder.LENGTH_DES, false);
+        desKey.setKey(Hex.decode(DES_KEY),(short)0);
+
+        try {
+            engineAES.init(desKey, Cipher.MODE_ENCRYPT);
+            fail("No exception");
+        }
+        catch (CryptoException e) {
+            assertEquals(CryptoException.ILLEGAL_VALUE, e.getReason());
+        }
+    }
+
+    /**
+     * Test mismatched Cipher DES algorithm and key AES type
+     */
+    public void testMismatchedCipherDESAlgorithmAndKeyAESType(){
+        Cipher engineDES = Cipher.getInstance(Cipher.ALG_DES_ECB_NOPAD,false);
+        Key aeskey = KeyBuilder.buildKey(KeyBuilder.TYPE_AES, KeyBuilder.LENGTH_AES_192, false);
+
+        byte[] etalonKey = Hex.decode(AES_ECB_192_TEST[0]);
+        short keyLenInBytes = (short) (KeyBuilder.LENGTH_AES_192 / 8);
+        byte[] key = new byte[keyLenInBytes];
+        Util.arrayCopy(etalonKey, (short) 0, key, (short) 0, (short) etalonKey.length);
+        ((AESKey)aeskey).setKey(key, (short) 0);
+
+        try {
+            engineDES.init(aeskey, Cipher.MODE_ENCRYPT);
+            fail("No exception");
+        }
+        catch (CryptoException e) {
+            assertEquals(CryptoException.ILLEGAL_VALUE, e.getReason());
+        }
+    }
+
+    /**
+     * Test AES encryption/decryption and try DES cipher with AES key type
+     */
+    public void testSymmetricCipherAESEncryptionInApplet(){
+        Simulator instance = new Simulator();
+
+        String appletAIDStr = "010203040506070809";
+        AID appletAID = AIDUtil.create(appletAIDStr);
+        instance.installApplet(appletAID, SymmetricCipherApplet.class);
+        instance.selectApplet(appletAID);
+
+        // 1. Send C-APDU to set AES key
+        // Create C-APDU to send 128-bit AES key in CData
+        byte[] key = Hex.decode(AES_CBC_128_TEST[0]);
+        short keyLen = KeyBuilder.LENGTH_AES_128/8;
+        byte[] commandAPDUHeaderWithLc = new byte[]{0x10, 0x10, (byte) KeyBuilder.LENGTH_AES_128, 0, (byte) keyLen};
+        byte[] sendAPDU = new byte[5+keyLen];
+        System.arraycopy(commandAPDUHeaderWithLc, 0, sendAPDU, 0, 5);
+        System.arraycopy(key, 0, sendAPDU, 5, keyLen);
+
+        // Send C-APDU
+        byte[] response = instance.transmitCommand(sendAPDU);
+        // Check command succeeded
+        assertEquals(ISO7816.SW_NO_ERROR, Util.getShort(response, (short) 0));
+
+        // 2. Send C-APDU to encrypt data with ALG_AES_BLOCK_128_CBC_NOPAD
+        // Create C-APDU to send data to encrypt and read the encrypted back
+        byte[] data = Hex.decode(AES_CBC_128_TEST[1]);
+        byte apdu_Lc = (byte) data.length;
+
+        commandAPDUHeaderWithLc = new byte[]{0x10, 0x11, Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, 0, apdu_Lc};
+        sendAPDU = new byte[5+apdu_Lc+1];
+        System.arraycopy(commandAPDUHeaderWithLc, 0, sendAPDU, 0, 5);
+        System.arraycopy(data, 0, sendAPDU, 5, apdu_Lc);
+
+        // Set Le
+        byte apdu_Le = (byte) data.length;
+        sendAPDU[5+apdu_Lc] = apdu_Le;
+
+        // Send C-APDU to encrypt data
+        response = instance.transmitCommand(sendAPDU);
+        // Check command succeeded
+        assertEquals(ISO7816.SW_NO_ERROR, Util.getShort(response, apdu_Le));
+
+        byte[] encryptedData = new byte[apdu_Le];
+        System.arraycopy(response, 0, encryptedData, 0, encryptedData.length);
+
+        // Prove that encrypted data is not equal the original one
+        assertFalse( Arrays.areEqual(encryptedData, data) );
+
+        // 3. Send C-APDU to decrypt data with ALG_AES_BLOCK_128_CBC_NOPAD and read back to check
+        // Create C-APDU to decrypt data
+        apdu_Lc = (byte) encryptedData.length;
+        commandAPDUHeaderWithLc = new byte[]{0x10, 0x12, Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, 0, apdu_Lc};
+        sendAPDU = new byte[5+apdu_Lc+1];
+        System.arraycopy(commandAPDUHeaderWithLc, 0, sendAPDU, 0, 5);
+        System.arraycopy(encryptedData, 0, sendAPDU, 5, apdu_Lc);
+
+        // Set Le
+        apdu_Le = (byte) encryptedData.length;
+        sendAPDU[5+apdu_Lc] = apdu_Le;
+
+        // Send C-APDU to encrypt data
+        response = instance.transmitCommand(sendAPDU);
+        // Check command succeeded
+        assertEquals(ISO7816.SW_NO_ERROR, Util.getShort(response, apdu_Le));
+
+        byte[] decryptedData = new byte[apdu_Le];
+        System.arraycopy(response, 0, decryptedData, 0, decryptedData.length);
+
+        // Check decrypted data is equal to the original one
+        assertTrue( Arrays.areEqual(decryptedData, data) );
+
+        // 4. Send C-APDU to encrypt data with ALG_DES_CBC_NOPAD, intend to send mismatched cipher DES algorithm
+        data = Hex.decode(MESSAGE_15);
+        apdu_Lc = (byte) data.length;
+
+        commandAPDUHeaderWithLc = new byte[]{0x20, 0x11, Cipher.ALG_DES_CBC_NOPAD, 0, apdu_Lc};
+        sendAPDU = new byte[5+apdu_Lc+1];
+        System.arraycopy(commandAPDUHeaderWithLc, 0, sendAPDU, 0, 5);
+        System.arraycopy(data, 0, sendAPDU, 5, apdu_Lc);
+
+        // Set Le
+        apdu_Le = (byte) data.length;
+        sendAPDU[5+apdu_Lc] = apdu_Le;
+
+        // Send C-APDU to encrypt data
+        response = instance.transmitCommand(sendAPDU);
+        // Check exception for ISO7816.SW_UNKNOWN
+        assertEquals(ISO7816.SW_UNKNOWN, Util.getShort(response, (short) 0));
+
+    }
+    /**
+     * Test DES encryption/decryption and try AES cipher with DES key type
+     */
+    public void testSymmetricCipherDESEncryptionInApplet(){
+        Simulator instance = new Simulator();
+
+        String appletAIDStr = "010203040506070809";
+        AID appletAID = AIDUtil.create(appletAIDStr);
+        instance.installApplet(appletAID, SymmetricCipherApplet.class);
+        instance.selectApplet(appletAID);
+
+        // 1. Send C-APDU to set DES key
+        // Create C-APDU to send DES3_3KEY in CData
+        byte[] key = Hex.decode(DES3_KEY);
+        short keyLen = (short) key.length;
+        byte[] commandAPDUHeaderWithLc = new byte[]{0x20, 0x10, (byte) KeyBuilder.LENGTH_DES3_3KEY, 0, (byte) keyLen};
+        byte[] sendAPDU = new byte[5+keyLen];
+        System.arraycopy(commandAPDUHeaderWithLc, 0, sendAPDU, 0, 5);
+        System.arraycopy(key, 0, sendAPDU, 5, keyLen);
+
+        // Send C-APDU
+        byte[] response = instance.transmitCommand(sendAPDU);
+        // Check command succeeded
+        assertEquals(ISO7816.SW_NO_ERROR, Util.getShort(response, (short) 0));
+
+        // 2. Send C-APDU to encrypt data with ALG_DES_CBC_ISO9797_M1
+        // Create C-APDU to send data to encrypt and read the encrypted back
+        byte[] data = Hex.decode(MESSAGE_15);
+        byte apdu_Lc = (byte) data.length;
+
+        commandAPDUHeaderWithLc = new byte[]{0x20, 0x11, Cipher.ALG_DES_CBC_ISO9797_M1, 0, apdu_Lc};
+        sendAPDU = new byte[5+apdu_Lc+1];
+        System.arraycopy(commandAPDUHeaderWithLc, 0, sendAPDU, 0, 5);
+        System.arraycopy(data, 0, sendAPDU, 5, apdu_Lc);
+
+        // Set Le
+        byte apdu_Le = 16;
+        sendAPDU[5+apdu_Lc] = apdu_Le;
+
+        // Send C-APDU to encrypt data
+        response = instance.transmitCommand(sendAPDU);
+        // Check command succeeded
+        assertEquals(ISO7816.SW_NO_ERROR, Util.getShort(response, apdu_Le));
+
+        byte[] encryptedData = new byte[apdu_Le];
+        System.arraycopy(response, 0, encryptedData, 0, encryptedData.length);
+
+        // Prove that encrypted data is not equal the original one
+        assertFalse( Arrays.areEqual(encryptedData, data) );
+        // Check that encrypted data is correct
+        assertTrue( Arrays.areEqual(encryptedData, Hex.decode(DES3_ENCRYPTED_15[0])));
+
+        // 3. Send C-APDU to decrypt data with ALG_DES_CBC_ISO9797_M1 and read back to check
+        // Create C-APDU to decrypt data
+        apdu_Lc = (byte) encryptedData.length;
+        commandAPDUHeaderWithLc = new byte[]{0x20, 0x12, Cipher.ALG_DES_CBC_ISO9797_M1, 0, apdu_Lc};
+        sendAPDU = new byte[5+apdu_Lc+1];
+        System.arraycopy(commandAPDUHeaderWithLc, 0, sendAPDU, 0, 5);
+        System.arraycopy(encryptedData, 0, sendAPDU, 5, apdu_Lc);
+
+        // Set Le
+        apdu_Le = (byte) data.length;
+        sendAPDU[5+apdu_Lc] = apdu_Le;
+
+        // Send C-APDU to encrypt data
+        response = instance.transmitCommand(sendAPDU);
+        // Check command succeeded
+        assertEquals(ISO7816.SW_NO_ERROR, Util.getShort(response, apdu_Le));
+
+        byte[] decryptedData = new byte[apdu_Le];
+        System.arraycopy(response, 0, decryptedData, 0, decryptedData.length);
+
+        // Check decrypted data is equal to the original one
+        assertTrue( Arrays.areEqual(decryptedData, data) );
+
+        // 4. Send C-APDU to encrypt data with ALG_AES_BLOCK_128_CBC_NOPAD, intend to send mismatched cipher AES algorithm
+        data = Hex.decode(AES_CBC_128_TEST[1]);
+        apdu_Lc = (byte) data.length;
+
+        commandAPDUHeaderWithLc = new byte[]{0x10, 0x11, Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, 0, apdu_Lc};
+        sendAPDU = new byte[5+apdu_Lc+1];
+        System.arraycopy(commandAPDUHeaderWithLc, 0, sendAPDU, 0, 5);
+        System.arraycopy(data, 0, sendAPDU, 5, apdu_Lc);
+
+        // Set Le
+        apdu_Le = (byte) data.length;
+        sendAPDU[5+apdu_Lc] = apdu_Le;
+
+        // Send C-APDU to encrypt data
+        response = instance.transmitCommand(sendAPDU);
+        // Check exception for ISO7816.SW_UNKNOWN
+        assertEquals(ISO7816.SW_UNKNOWN, Util.getShort(response, (short) 0));
+
+    }
+
+    public void testAES_CTR_128BitKey(){
+        Cipher engine = Cipher.getInstance(Cipher.ALG_AES_CTR,false);
+        AESKey aesKey = (AESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_AES, KeyBuilder.LENGTH_AES_128, false);
+        short keyLenInBytes = (short) (KeyBuilder.LENGTH_AES_128 / Byte.SIZE);
+        byte[] etalonKey = Hex.decode(AES_CTR_128_TEST[0]);
+        byte[] key = new byte[keyLenInBytes];
+        Util.arrayCopy(etalonKey, (short) 0, key, (short) 0, (short) etalonKey.length);
+        aesKey.setKey(key, (short) 0);
+
+        byte[] initCounter = Hex.decode(AES_CTR_128_TEST[1]);
+        engine.init(aesKey,Cipher.MODE_ENCRYPT,initCounter, (short) 0, (short) initCounter.length);
+
+        byte[] msg = Hex.decode(AES_CTR_128_TEST[2]);
+        byte[] encrypted = new byte[msg.length];
+        engine.doFinal(msg, (short) 0, (short) msg.length,encrypted, (short) 0);
+
+        byte[] ciphertext = Hex.decode(AES_CTR_128_TEST[3]);
+
+        assertEquals(true,Arrays.areEqual(encrypted, ciphertext));
+
+        engine.init(aesKey,Cipher.MODE_DECRYPT,initCounter, (short) 0, (short) initCounter.length);
+        byte[] decrypted = new byte[encrypted.length];
+        engine.doFinal(encrypted, (short) 0, (short) encrypted.length,decrypted, (short) 0);
+
+        assertEquals(true,Arrays.areEqual(decrypted, msg));
+    }
+
+    public void testAES_CTR_192BitKey(){
+        Cipher engine = Cipher.getInstance(Cipher.ALG_AES_CTR,false);
+        AESKey aesKey = (AESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_AES, KeyBuilder.LENGTH_AES_192, false);
+        short keyLenInBytes = (short) (KeyBuilder.LENGTH_AES_192 / Byte.SIZE);
+        byte[] etalonKey = Hex.decode(AES_CTR_192_TEST[0]);
+        byte[] key = new byte[keyLenInBytes];
+        Util.arrayCopy(etalonKey, (short) 0, key, (short) 0, (short) etalonKey.length);
+        aesKey.setKey(key, (short) 0);
+
+        byte[] initCounter = Hex.decode(AES_CTR_192_TEST[1]);
+        engine.init(aesKey,Cipher.MODE_ENCRYPT,initCounter, (short) 0, (short) initCounter.length);
+
+        byte[] msg = Hex.decode(AES_CTR_192_TEST[2]);
+        byte[] encrypted = new byte[msg.length];
+        engine.doFinal(msg, (short) 0, (short) msg.length,encrypted, (short) 0);
+
+        byte[] ciphertext = Hex.decode(AES_CTR_192_TEST[3]);
+
+        assertEquals(true,Arrays.areEqual(encrypted, ciphertext));
+
+        engine.init(aesKey,Cipher.MODE_DECRYPT,initCounter, (short) 0, (short) initCounter.length);
+        byte[] decrypted = new byte[encrypted.length];
+        engine.doFinal(encrypted, (short) 0, (short) encrypted.length,decrypted, (short) 0);
+
+        assertEquals(true,Arrays.areEqual(decrypted, msg));
+    }
+
+    public void testAES_CTR_256BitKey(){
+        Cipher engine = Cipher.getInstance(Cipher.ALG_AES_CTR,false);
+        AESKey aesKey = (AESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_AES, KeyBuilder.LENGTH_AES_256, false);
+        short keyLenInBytes = (short) (KeyBuilder.LENGTH_AES_256 / Byte.SIZE);
+        byte[] etalonKey = Hex.decode(AES_CTR_256_TEST[0]);
+        byte[] key = new byte[keyLenInBytes];
+        Util.arrayCopy(etalonKey, (short) 0, key, (short) 0, (short) etalonKey.length);
+        aesKey.setKey(key, (short) 0);
+
+        byte[] initCounter = Hex.decode(AES_CTR_256_TEST[1]);
+        engine.init(aesKey,Cipher.MODE_ENCRYPT,initCounter, (short) 0, (short) initCounter.length);
+
+        byte[] msg = Hex.decode(AES_CTR_256_TEST[2]);
+        byte[] encrypted = new byte[msg.length];
+        engine.doFinal(msg, (short) 0, (short) msg.length,encrypted, (short) 0);
+
+        byte[] ciphertext = Hex.decode(AES_CTR_256_TEST[3]);
+
+        assertEquals(true,Arrays.areEqual(encrypted, ciphertext));
+
+        engine.init(aesKey,Cipher.MODE_DECRYPT,initCounter, (short) 0, (short) initCounter.length);
+        byte[] decrypted = new byte[encrypted.length];
+        engine.doFinal(encrypted, (short) 0, (short) encrypted.length,decrypted, (short) 0);
+
+        assertEquals(true,Arrays.areEqual(decrypted, msg));
+    }
+
+    // Korean SEED test vectors from https://www.rfc-editor.org/rfc/pdfrfc/rfc4269.txt.pdf
+    // FORMAT: key:plaintext:ciphertext
+    // Appendix B.1
+    String[] KOREAN_SEED_TEST1 = {"00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+                                  "00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F",
+                                  "5E BA C6 E0 05 4E 16 68 19 AF F1 CC 6D 34 6C DB"};
+    // Appendix B.2
+    String[] KOREAN_SEED_TEST2 = {"00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F",
+                                  "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+                                  "C1 1F 22 F2 01 40 50 50 84 48 35 97 E4 37 0F 43"};
+    // Appendix B.3
+    String[] KOREAN_SEED_TEST3 = {"47 06 48 08 51 E6 1B E8 5D 74 BF B3 FD 95 61 85",
+                                  "83 A2 F8 A2 88 64 1F B9 A4 E9 A5 CC 2F 13 1C 7D",
+                                  "EE 54 D1 3E BC AE 70 6D 22 6B C3 14 2C D4 0D 4A"};
+    // Appendix B.4
+    String[] KOREAN_SEED_TEST4 = {"28 DB C3 BC 49 FF D8 7D CF A5 09 B1 1D 42 2B E7",
+                                  "B4 1E 6B E2 EB A8 4A 14 8E 2E ED 84 59 3C 5E C7",
+                                  "9B 9B 7B FC D1 81 3C B9 5D 0B 36 18 F4 0F 51 22"};
+
+    public void testKOREAN_SEED_CBC_NOPAD(){
+        testKOREAN_SEED(KOREAN_SEED_TEST1,Cipher.ALG_KOREAN_SEED_CBC_NOPAD);
+        testKOREAN_SEED(KOREAN_SEED_TEST2,Cipher.ALG_KOREAN_SEED_CBC_NOPAD);
+        testKOREAN_SEED(KOREAN_SEED_TEST3,Cipher.ALG_KOREAN_SEED_CBC_NOPAD);
+        testKOREAN_SEED(KOREAN_SEED_TEST4,Cipher.ALG_KOREAN_SEED_CBC_NOPAD);
+
+        testKOREAN_SEED_WithIV(KOREAN_SEED_TEST1,Cipher.ALG_KOREAN_SEED_CBC_NOPAD);
+        testKOREAN_SEED_WithIV(KOREAN_SEED_TEST2,Cipher.ALG_KOREAN_SEED_CBC_NOPAD);
+        testKOREAN_SEED_WithIV(KOREAN_SEED_TEST3,Cipher.ALG_KOREAN_SEED_CBC_NOPAD);
+        testKOREAN_SEED_WithIV(KOREAN_SEED_TEST4,Cipher.ALG_KOREAN_SEED_CBC_NOPAD);
+    }
+    public void testKOREAN_SEED_ECB_NOPAD(){
+        testKOREAN_SEED(KOREAN_SEED_TEST1,Cipher.ALG_KOREAN_SEED_ECB_NOPAD);
+        testKOREAN_SEED(KOREAN_SEED_TEST2,Cipher.ALG_KOREAN_SEED_ECB_NOPAD);
+        testKOREAN_SEED(KOREAN_SEED_TEST3,Cipher.ALG_KOREAN_SEED_ECB_NOPAD);
+        testKOREAN_SEED(KOREAN_SEED_TEST4,Cipher.ALG_KOREAN_SEED_ECB_NOPAD);
+
+        // From https://docs.oracle.com/javacard/3.0.5/api/javacardx/crypto/Cipher.html#init(javacard.security.Key,%20byte,%20byte[],%20short,%20short)
+        // AES algorithms in ECB mode, DES algorithms in ECB mode, Korean SEED algorithm in ECB mode, RSA and DSA algorithms throw CryptoException.ILLEGAL_VALUE.
+        try{
+            testKOREAN_SEED_WithIV(KOREAN_SEED_TEST1,Cipher.ALG_KOREAN_SEED_ECB_NOPAD);
+            fail("No exception");
+        }
+        catch (CryptoException e){
+            assertEquals(CryptoException.ILLEGAL_VALUE, e.getReason());
+        }
+    }
+    public void testKOREAN_SEED(String[] seedTestData, byte algorithm){
+        Cipher engine = Cipher.getInstance(algorithm, false);
+        KoreanSEEDKey seedKey = (KoreanSEEDKey) KeyBuilder.buildKey(KeyBuilder.TYPE_KOREAN_SEED, KeyBuilder.LENGTH_KOREAN_SEED_128, false);
+        short keyLenInBytes = (short) (KeyBuilder.LENGTH_KOREAN_SEED_128 / Byte.SIZE);
+        byte[] key = Hex.decode(seedTestData[0]);
+        seedKey.setKey(key, (short) 0);
+
+        engine.init(seedKey,Cipher.MODE_ENCRYPT);
+
+        byte[] msg = Hex.decode(seedTestData[1]);
+        byte[] encrypted = new byte[msg.length];
+        engine.doFinal(msg, (short) 0, (short) msg.length,encrypted, (short) 0);
+
+        byte[] ciphertext = Hex.decode(seedTestData[2]);
+
+        assertEquals(true,Arrays.areEqual(encrypted, ciphertext));
+
+        engine.init(seedKey,Cipher.MODE_DECRYPT);
+        byte[] decrypted = new byte[encrypted.length];
+        engine.doFinal(encrypted, (short) 0, (short) encrypted.length,decrypted, (short) 0);
+
+        assertEquals(true,Arrays.areEqual(decrypted, msg));
+    }
+
+    public void testKOREAN_SEED_WithIV(String[] seedTestData, byte algorithm){
+        Cipher engine = Cipher.getInstance(algorithm, false);
+        KoreanSEEDKey seedKey = (KoreanSEEDKey) KeyBuilder.buildKey(KeyBuilder.TYPE_KOREAN_SEED, KeyBuilder.LENGTH_KOREAN_SEED_128, false);
+        short keyLenInBytes = (short) (KeyBuilder.LENGTH_KOREAN_SEED_128 / Byte.SIZE);
+        byte[] key = Hex.decode(seedTestData[0]);
+        seedKey.setKey(key, (short) 0);
+
+        byte[] iv = new byte[16];
+        Arrays.fill(iv, (byte) 0);
+        engine.init(seedKey,Cipher.MODE_ENCRYPT, iv, (short) 0, (short) iv.length);
+
+        byte[] msg = Hex.decode(seedTestData[1]);
+        byte[] encrypted = new byte[msg.length];
+        engine.doFinal(msg, (short) 0, (short) msg.length,encrypted, (short) 0);
+
+        byte[] ciphertext = Hex.decode(seedTestData[2]);
+
+        assertEquals(true,Arrays.areEqual(encrypted, ciphertext));
+
+        engine.init(seedKey,Cipher.MODE_DECRYPT, iv, (short) 0, (short) iv.length);
+
+        byte[] decrypted = new byte[encrypted.length];
+        engine.doFinal(encrypted, (short) 0, (short) encrypted.length,decrypted, (short) 0);
+
+        assertEquals(true,Arrays.areEqual(decrypted, msg));
+    }
+
+
 }

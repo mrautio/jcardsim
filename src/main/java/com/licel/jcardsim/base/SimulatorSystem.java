@@ -15,9 +15,7 @@
  */
 package com.licel.jcardsim.base;
 
-import javacard.framework.*;
-
-import java.lang.reflect.Constructor;
+import javacard.framework.JCSystem;
 
 /**
  * Base implementation of <code>JCSystem</code>.

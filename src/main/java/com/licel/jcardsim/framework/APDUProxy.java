@@ -18,12 +18,13 @@ package com.licel.jcardsim.framework;
 import com.licel.jcardsim.base.ApduCase;
 import com.licel.jcardsim.base.SimulatorSystem;
 import com.licel.jcardsim.utils.ByteUtil;
-import java.lang.reflect.Field;
-import java.util.Arrays;
 import javacard.framework.APDU;
 import javacard.framework.APDUException;
 import javacard.framework.ISO7816;
 import javacard.framework.Util;
+
+import java.lang.reflect.Field;
+import java.util.Arrays;
 
 /**
  * Implementation for <code>APDU</code>

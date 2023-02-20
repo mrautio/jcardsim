@@ -15,22 +15,11 @@ package com.licel.jcardsim.crypto;
  * limitations under the License.
  */
 
-import java.util.Arrays;
 import javacard.framework.Util;
-import javacard.security.DHPrivateKey;
-import javacard.security.DHPublicKey;
-import javacard.security.DSAPrivateKey;
-import javacard.security.DSAPublicKey;
-import javacard.security.ECPrivateKey;
-import javacard.security.ECPublicKey;
-import javacard.security.KeyBuilder;
-import javacard.security.KeyPair;
-import javacard.security.PrivateKey;
-import javacard.security.PublicKey;
-import javacard.security.RSAPrivateCrtKey;
-import javacard.security.RSAPrivateKey;
-import javacard.security.RSAPublicKey;
+import javacard.security.*;
 import junit.framework.TestCase;
+
+import java.util.Arrays;
 
 /**
  * Test for <code>KeyPairImpl</code>

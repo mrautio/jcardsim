@@ -64,6 +64,12 @@ public class SignatureProxy {
             case Signature.ALG_ECDSA_SHA_384:
             case Signature.ALG_ECDSA_SHA_512:
             case Signature.ALG_RSA_SHA_ISO9796_MR:
+            case Signature.ALG_DSA_SHA:
+            case Signature.ALG_RSA_SHA_RFC2409:
+            case Signature.ALG_RSA_MD5_RFC2409:
+            case Signature.ALG_RSA_MD5_PKCS1_PSS:
+            case Signature.ALG_RSA_RIPEMD160_PKCS1_PSS:
+            case Signature.ALG_RSA_RIPEMD160_ISO9796_MR:
                 System.out.println("getInstance of assymetric algo: " + algorithm);
                 try {
                     instance = new AsymmetricSignatureImpl(algorithm);
@@ -102,5 +108,10 @@ public class SignatureProxy {
         }
         return instance;
     }
-    
+
+    public static final Signature getInstance(byte messageDigestAlgorithm, byte cipherAlgorithm,
+            byte paddingAlgorithm, boolean externalAccess) throws CryptoException {
+        return new AsymmetricSignatureImpl(messageDigestAlgorithm, cipherAlgorithm, paddingAlgorithm);
+    }
+
 }

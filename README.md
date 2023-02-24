@@ -1,5 +1,6 @@
 jCardSim (Official repo of the [jCardSim](http://jcardsim.org) project)
 ========
+![Build Status](https://github.com/ph4r05/jcardsim/actions/workflows/build.yml/badge.svg)
 
 ### Congratulations! jCardSim has won [Duke's Choice 2013 Award](https://www.java.net/dukeschoice/2013)!
 

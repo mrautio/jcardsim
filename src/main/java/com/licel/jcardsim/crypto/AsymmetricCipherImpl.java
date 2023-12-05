@@ -21,6 +21,7 @@ import javacard.security.CryptoException;
 import javacard.security.Key;
 import javacardx.crypto.Cipher;
 import org.bouncycastle.crypto.AsymmetricBlockCipher;
+import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.encodings.OAEPEncoding;
 import org.bouncycastle.crypto.encodings.PKCS1Encoding;
@@ -99,7 +100,7 @@ public class AsymmetricCipherImpl extends Cipher {
             if ((outBuff.length - outOffset) < engine.getOutputBlockSize()) {
                 CryptoException.throwIt(CryptoException.ILLEGAL_USE);
             }
-            if ((inLength - inOffset) > engine.getInputBlockSize()) {
+            if ((inLength - inOffset) > engine.getInputBlockSize() + (algorithm == ALG_RSA_NOPAD ? 1 : 0)) {
                 CryptoException.throwIt(CryptoException.ILLEGAL_USE);
             }
         }
@@ -116,7 +117,7 @@ public class AsymmetricCipherImpl extends Cipher {
             Util.arrayCopyNonAtomic(data, (short) 0, outBuff, outOffset, (short) data.length);
             bufferPos = 0;
             return (short) data.length;
-        } catch (InvalidCipherTextException ex) {
+        } catch (InvalidCipherTextException | DataLengthException ex) {
             CryptoException.throwIt(CryptoException.ILLEGAL_USE);
         }
         return -1;
